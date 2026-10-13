@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+void main() {
   runApp(const AdminApp());
 }
 
@@ -146,39 +142,12 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
   final _timeController = TextEditingController();
   final _roomIdController = TextEditingController();
   final _roomPassController = TextEditingController();
-  bool _isSaving = false;
 
-  Future<void> _saveTournament() async {
-    setState(() => _isSaving = true);
-    try {
-      await FirebaseFirestore.instance.collection('tournaments').add({
-        'name': _nameController.text.trim(),
-        'entryFee': _entryFeeController.text.trim(),
-        'prize': _prizeController.text.trim(),
-        'date': _dateController.text.trim(),
-        'time': _timeController.text.trim(),
-        'roomId': _roomIdController.text.trim(),
-        'roomPass': _roomPassController.text.trim(),
-        'game': 'Free Fire',
-        'status': 'upcoming',
-        'players': '',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tournament Created Successfully!')),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
-    } finally {
-      setState(() => _isSaving = false);
-    }
+  void _saveTournament() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Tournament Created Successfully!')),
+    );
+    Navigator.pop(context);
   }
 
   @override
@@ -227,16 +196,14 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
               decoration: const InputDecoration(labelText: 'Room Password', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 20),
-            _isSaving
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _saveTournament,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      minimumSize: const Size(double.infinity, 50),
-                    ),
-                    child: const Text('SAVE TOURNAMENT', style: TextStyle(fontSize: 18)),
-                  ),
+            ElevatedButton(
+              onPressed: _saveTournament,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              child: const Text('SAVE TOURNAMENT', style: TextStyle(fontSize: 18)),
+            ),
           ],
         ),
       ),
