@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'dart:io';
 
@@ -30,7 +31,65 @@ class AdminApp extends StatelessWidget {
           secondary: Color(0xFFFFC107),
         ),
       ),
-      home: const LoginPage(),
+      home: const SplashScreen(),
+    );
+  }
+}
+
+// ================= SPLASH SCREEN =================
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkLogin();
+  }
+
+  Future<void> _checkLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      if (isLoggedIn) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminHomePage()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0D0D0D),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.local_fire_department, size: 100, color: Color(0xFFFFC107)),
+            const SizedBox(height: 20),
+            const Text('SDFF ARENA', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFFFC107))),
+            const SizedBox(height: 8),
+            const Text('FREE FIRE TOURNAMENT', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: 40),
+            const CircularProgressIndicator(color: Color(0xFFFFC107)),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -47,13 +106,17 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   String _errorMessage = '';
 
-  void _login() {
+  void _login() async {
     if (_emailController.text.trim() == 'hareshkumarpatra87@gmail.com' &&
         _passwordController.text.trim() == '8280384483H') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const AdminHomePage()),
-      );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminHomePage()),
+        );
+      }
     } else {
       setState(() => _errorMessage = 'ଭୁଲ୍ ଇମେଲ୍ କିମ୍ବା ପାସୱାର୍ଡ');
     }
@@ -98,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 // ================= ADMIN HOME =================
-   class AdminHomePage extends StatelessWidget {
+class AdminHomePage extends StatelessWidget {
   const AdminHomePage({super.key});
 
   @override
@@ -298,6 +361,55 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
+// ================= DRAWER =================
+class AdminDrawer extends StatelessWidget {
+  const AdminDrawer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      backgroundColor: const Color(0xFF1A1A1A),
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(color: Color(0xFF0D0D0D)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: const [
+                Icon(Icons.local_fire_department, color: Color(0xFFFFC107), size: 40),
+                SizedBox(height: 8),
+                Text('SDFF ARENA', style: TextStyle(color: Color(0xFFFFC107), fontSize: 20, fontWeight: FontWeight.bold)),
+                Text('Admin Panel', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              ],
+            ),
+          ),
+          _drawerItem(context, 'Dashboard', Icons.home, const AdminHomePage()),
+          _drawerItem(context, 'Create Tournament', Icons.emoji_events, const CreateTournamentPage()),
+          _drawerItem(context, 'Players', Icons.people, const PlayersPage()),
+          _drawerItem(context, 'Payments', Icons.payment, const PaymentsPage()),
+          _drawerItem(context, 'QR Upload', Icons.qr_code, const QrUploadPage()),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout'),
+            onTap: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setBool('isLoggedIn', false);
+              if (context.mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                  (route) => false,
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _drawerItem(BuildContext context, String title, IconData icon, Widget page) {
     return ListTile(
       leading: Icon(icon, color: const Color(0xFFFFC107)),
@@ -425,90 +537,4 @@ class PaymentsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment Requests'), backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('payments').snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-          final docs = snapshot.data!.docs;
-          if (docs.isEmpty) return const Center(child: Text('No payment requests'));
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (context, i) {
-              final d = docs[i].data() as Map<String, dynamic>;
-              return ListTile(
-                leading: const Icon(Icons.payment, color: Colors.green),
-                title: Text(d['playerName'] ?? 'Unknown'),
-                subtitle: Text('Amount: ₹${d['amount'] ?? 0}'),
-                trailing: Text(d['status'] ?? 'pending'),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ================= QR UPLOAD PAGE =================
-class QrUploadPage extends StatefulWidget {
-  const QrUploadPage({super.key});
-  @override
-  State<QrUploadPage> createState() => _QrUploadPageState();
-}
-
-class _QrUploadPageState extends State<QrUploadPage> {
-  File? _qrImage;
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickQr() async {
-    final XFile? picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() => _qrImage = File(picked.path));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('QR Upload'), backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Container(
-              height: 250,
-              width: double.infinity,
-              decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.amber)),
-              child: _qrImage == null
-                  ? const Center(child: Text('No QR uploaded yet', style: TextStyle(color: Colors.grey)))
-                  : Image.file(_qrImage!, fit: BoxFit.contain),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: _pickQr,
-              icon: const Icon(Icons.upload),
-              label: const Text('UPLOAD QR CODE'),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black, minimumSize: const Size(double.infinity, 50)),
-            ),
-            const SizedBox(height: 12),
-            const Text('This QR will be shown to players in the Player App', style: TextStyle(color: Colors.grey, fontSize: 12), textAlign: TextAlign.center),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ================= LEADERBOARD PAGE =================
-class LeaderboardPage extends StatelessWidget {
-  const LeaderboardPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Leaderboard'), backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black),
-      body: const Center(child: Text('Leaderboard Coming Soon')),
-    );
-  }
-}
+      appBar: 
