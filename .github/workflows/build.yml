@@ -22,7 +22,7 @@ jobs:
           channel: 'stable'
 
       - name: Generate Android files
-        run: flutter create --project-name hpff_admin --org com.hpff .
+        run: flutter create --project-name hpff_admin --org com.hpff.arena .
 
       - name: Get dependencies
         run: flutter pub get
