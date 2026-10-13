@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "95880317596",
+    "project_id": "hpff-arena",
+    "storage_bucket": "hpff-arena.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:95880317596:android:cbfb2b0c095d40b540bb59",
+        "android_client_info": {
+          "package_name": "com.hpff.arena"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCv6kEm1uwysWxqLpJ46S7XcOWOA3NWlGs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
