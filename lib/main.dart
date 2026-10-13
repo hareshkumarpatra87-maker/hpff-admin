@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const AdminApp());
 }
 
@@ -108,10 +112,132 @@ class AdminHomePage extends StatelessWidget {
         title: const Text('HPFF ADMIN PANEL'),
         backgroundColor: Colors.red,
       ),
-      body: const Center(
-        child: Text(
-          'Admin Control Panel',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CreateTournamentPage()),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+          ),
+          child: const Text('Create Tournament', style: TextStyle(fontSize: 18)),
+        ),
+      ),
+    );
+  }
+}
+
+class CreateTournamentPage extends StatefulWidget {
+  const CreateTournamentPage({super.key});
+
+  @override
+  State<CreateTournamentPage> createState() => _CreateTournamentPageState();
+}
+
+class _CreateTournamentPageState extends State<CreateTournamentPage> {
+  final _nameController = TextEditingController();
+  final _entryFeeController = TextEditingController();
+  final _prizeController = TextEditingController();
+  final _dateController = TextEditingController();
+  final _timeController = TextEditingController();
+  final _roomIdController = TextEditingController();
+  final _roomPassController = TextEditingController();
+  bool _isSaving = false;
+
+  Future<void> _saveTournament() async {
+    setState(() => _isSaving = true);
+    try {
+      await FirebaseFirestore.instance.collection('tournaments').add({
+        'name': _nameController.text.trim(),
+        'entryFee': _entryFeeController.text.trim(),
+        'prize': _prizeController.text.trim(),
+        'date': _dateController.text.trim(),
+        'time': _timeController.text.trim(),
+        'roomId': _roomIdController.text.trim(),
+        'roomPass': _roomPassController.text.trim(),
+        'game': 'Free Fire',
+        'status': 'upcoming',
+        'players': '',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tournament Created Successfully!')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Create Tournament'),
+        backgroundColor: Colors.red,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: 'Tournament Name', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _entryFeeController,
+              decoration: const InputDecoration(labelText: 'Entry Fee', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _prizeController,
+              decoration: const InputDecoration(labelText: 'Prize', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _dateController,
+              decoration: const InputDecoration(labelText: 'Date', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _timeController,
+              decoration: const InputDecoration(labelText: 'Time', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _roomIdController,
+              decoration: const InputDecoration(labelText: 'Room ID', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _roomPassController,
+              decoration: const InputDecoration(labelText: 'Room Password', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 20),
+            _isSaving
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: _saveTournament,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: const Text('SAVE TOURNAMENT', style: TextStyle(fontSize: 18)),
+                  ),
+          ],
         ),
       ),
     );
