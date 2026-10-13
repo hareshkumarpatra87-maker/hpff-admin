@@ -79,10 +79,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 20),
             if (_errorMessage.isNotEmpty)
-              Text(
-                _errorMessage,
-                style: const TextStyle(color: Colors.red),
-              ),
+              Text(_errorMessage, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _login,
@@ -114,7 +111,6 @@ class AdminHomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Dashboard Cards
             Row(
               children: [
                 Expanded(child: _buildStatCard('Total Tournaments', '5', Icons.emoji_events, Colors.blue)),
@@ -137,15 +133,15 @@ class AdminHomePage extends StatelessWidget {
               children: [
                 Expanded(child: _buildActionButton(context, 'Create', Icons.add, Colors.red, const CreateTournamentPage())),
                 const SizedBox(width: 8),
-                Expanded(child: _buildActionButton(context, 'Players', Icons.people, Colors.blue, null)),
+                Expanded(child: _buildActionButton(context, 'Players', Icons.people, Colors.blue, const PlayersPage())),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: _buildActionButton(context, 'Leaderboard', Icons.leaderboard, Colors.purple, null)),
+                Expanded(child: _buildActionButton(context, 'Leaderboard', Icons.leaderboard, Colors.purple, const LeaderboardPage())),
                 const SizedBox(width: 8),
-                Expanded(child: _buildActionButton(context, 'Payments', Icons.payment, Colors.green, null)),
+                Expanded(child: _buildActionButton(context, 'Payments', Icons.payment, Colors.green, const PaymentsPage())),
               ],
             ),
             const SizedBox(height: 24),
@@ -181,12 +177,10 @@ class AdminHomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(BuildContext context, String label, IconData icon, Color color, Widget? page) {
+  Widget _buildActionButton(BuildContext context, String label, IconData icon, Color color, Widget page) {
     return GestureDetector(
       onTap: () {
-        if (page != null) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => page));
-        }
+        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -250,6 +244,7 @@ class AdminHomePage extends StatelessWidget {
   }
 }
 
+// CREATE TOURNAMENT PAGE
 class CreateTournamentPage extends StatefulWidget {
   const CreateTournamentPage({super.key});
 
@@ -276,59 +271,92 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Tournament'),
-        backgroundColor: Colors.red,
-      ),
+      appBar: AppBar(title: const Text('Create Tournament'), backgroundColor: Colors.red),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Tournament Name', border: OutlineInputBorder()),
-            ),
+            TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Tournament Name', border: OutlineInputBorder())),
             const SizedBox(height: 12),
-            TextField(
-              controller: _entryFeeController,
-              decoration: const InputDecoration(labelText: 'Entry Fee', border: OutlineInputBorder()),
-            ),
+            TextField(controller: _entryFeeController, decoration: const InputDecoration(labelText: 'Entry Fee', border: OutlineInputBorder())),
             const SizedBox(height: 12),
-            TextField(
-              controller: _prizeController,
-              decoration: const InputDecoration(labelText: 'Prize', border: OutlineInputBorder()),
-            ),
+            TextField(controller: _prizeController, decoration: const InputDecoration(labelText: 'Prize', border: OutlineInputBorder())),
             const SizedBox(height: 12),
-            TextField(
-              controller: _dateController,
-              decoration: const InputDecoration(labelText: 'Date', border: OutlineInputBorder()),
-            ),
+            TextField(controller: _dateController, decoration: const InputDecoration(labelText: 'Date', border: OutlineInputBorder())),
             const SizedBox(height: 12),
-            TextField(
-              controller: _timeController,
-              decoration: const InputDecoration(labelText: 'Time', border: OutlineInputBorder()),
-            ),
+            TextField(controller: _timeController, decoration: const InputDecoration(labelText: 'Time', border: OutlineInputBorder())),
             const SizedBox(height: 12),
-            TextField(
-              controller: _roomIdController,
-              decoration: const InputDecoration(labelText: 'Room ID', border: OutlineInputBorder()),
-            ),
+            TextField(controller: _roomIdController, decoration: const InputDecoration(labelText: 'Room ID', border: OutlineInputBorder())),
             const SizedBox(height: 12),
-            TextField(
-              controller: _roomPassController,
-              decoration: const InputDecoration(labelText: 'Room Password', border: OutlineInputBorder()),
-            ),
+            TextField(controller: _roomPassController, decoration: const InputDecoration(labelText: 'Room Password', border: OutlineInputBorder())),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _saveTournament,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                minimumSize: const Size(double.infinity, 50),
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, minimumSize: const Size(double.infinity, 50)),
               child: const Text('SAVE TOURNAMENT', style: TextStyle(fontSize: 18)),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// PLAYERS PAGE
+class PlayersPage extends StatelessWidget {
+  const PlayersPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Players'), backgroundColor: Colors.blue),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          ListTile(leading: CircleAvatar(child: Text('R')), title: Text('RakeshFF'), subtitle: Text('UID: 12345678'), trailing: Text('Joined')),
+          ListTile(leading: CircleAvatar(child: Text('N')), title: Text('Nitesh_07'), subtitle: Text('UID: 23456789'), trailing: Text('Joined')),
+          ListTile(leading: CircleAvatar(child: Text('L')), title: Text('LegendBoy'), subtitle: Text('UID: 34567890'), trailing: Text('Joined')),
+        ],
+      ),
+    );
+  }
+}
+
+// LEADERBOARD PAGE
+class LeaderboardPage extends StatelessWidget {
+  const LeaderboardPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Leaderboard'), backgroundColor: Colors.purple),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          ListTile(leading: Text('1', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), title: Text('RakeshFF'), trailing: Text('₹5,000')),
+          ListTile(leading: Text('2', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), title: Text('Nitesh_07'), trailing: Text('₹3,000')),
+          ListTile(leading: Text('3', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), title: Text('LegendBoy'), trailing: Text('₹2,000')),
+        ],
+      ),
+    );
+  }
+}
+
+// PAYMENTS PAGE
+class PaymentsPage extends StatelessWidget {
+  const PaymentsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Payments'), backgroundColor: Colors.green),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          ListTile(leading: Icon(Icons.check_circle, color: Colors.green), title: Text('Tournament Entry'), subtitle: Text('12 Oct 2026 • 07:12 PM'), trailing: Text('₹50')),
+          ListTile(leading: Icon(Icons.check_circle, color: Colors.green), title: Text('Prize Distribution'), subtitle: Text('11 Oct 2026 • 10:45 PM'), trailing: Text('₹1,000')),
+          ListTile(leading: Icon(Icons.check_circle, color: Colors.green), title: Text('Refund'), subtitle: Text('10 Oct 2026 • 04:20 PM'), trailing: Text('₹50')),
+        ],
       ),
     );
   }
