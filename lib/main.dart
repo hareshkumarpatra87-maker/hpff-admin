@@ -1,15 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import 'firebase_options.dart';
 import 'dart:io';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+void main() {
   runApp(const AdminApp());
 }
 
@@ -70,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             const Icon(Icons.local_fire_department, size: 100, color: Color(0xFFFFC107)),
             const SizedBox(height: 20),
-            const Text('SDFF ARENA', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFFFC107))),
+            const Text('HPFF ARENA', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFFFC107))),
             const SizedBox(height: 8),
             const Text('FREE FIRE TOURNAMENT', style: TextStyle(fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 40),
@@ -116,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             const Icon(Icons.local_fire_department, size: 90, color: Color(0xFFFFC107)),
             const SizedBox(height: 16),
-            const Text('SDFF ARENA', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFFFFC107))),
+            const Text('HPFF ARENA', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFFFFC107))),
             const Text('FREE FIRE TOURNAMENT', style: TextStyle(fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 40),
             TextField(
@@ -152,7 +145,7 @@ class AdminHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SDFF ARENA ADMIN'),
+        title: const Text('HPFF ARENA ADMIN'),
         backgroundColor: const Color(0xFFFFC107),
         foregroundColor: Colors.black,
       ),
@@ -162,49 +155,20 @@ class AdminHomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('tournaments').snapshots(),
-              builder: (context, tournamentSnap) {
-                return StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('users').snapshots(),
-                  builder: (context, userSnap) {
-                    final tournaments = tournamentSnap.data?.docs ?? [];
-                    final users = userSnap.data?.docs ?? [];
-
-                    int totalTournaments = tournaments.length;
-                    int totalPlayers = users.length;
-                    int upcoming = 0;
-                    int entryMoney = 0;
-
-                    for (var doc in tournaments) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      if (data['status'] == 'upcoming') upcoming++;
-                      final fee = int.tryParse(data['entryFee']?.toString() ?? '0') ?? 0;
-                      entryMoney += fee;
-                    }
-
-                    return Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(child: _statCard('Total Tournaments', '$totalTournaments', Icons.emoji_events, Colors.amber)),
-                            const SizedBox(width: 12),
-                            Expanded(child: _statCard('Total Players', '$totalPlayers', Icons.people, Colors.blue)),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(child: _statCard('Entry Money', '₹$entryMoney', Icons.monetization_on, Colors.green)),
-                            const SizedBox(width: 12),
-                            Expanded(child: _statCard('Upcoming', '$upcoming', Icons.schedule, Colors.orange)),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
+            Row(
+              children: [
+                Expanded(child: _statCard('Total Tournaments', '0', Icons.emoji_events, Colors.amber)),
+                const SizedBox(width: 12),
+                Expanded(child: _statCard('Total Players', '0', Icons.people, Colors.blue)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _statCard('Entry Money', '₹0', Icons.monetization_on, Colors.green)),
+                const SizedBox(width: 12),
+                Expanded(child: _statCard('Upcoming', '0', Icons.schedule, Colors.orange)),
+              ],
             ),
             const SizedBox(height: 24),
             const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -226,33 +190,9 @@ class AdminHomePage extends StatelessWidget {
             const SizedBox(height: 24),
             const Text('Recent Tournaments', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('tournaments')
-                  .orderBy('createdAt', descending: true)
-                  .limit(3)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final docs = snapshot.data!.docs;
-                if (docs.isEmpty) {
-                  return const Text('No tournaments yet', style: TextStyle(color: Colors.grey));
-                }
-                return Column(
-                  children: docs.map((doc) {
-                    final d = doc.data() as Map<String, dynamic>;
-                    return _tournamentTile(
-                      d['name'] ?? 'Unknown',
-                      '${d['entryFee'] ?? '0'} Fee • ${d['date'] ?? ''}',
-                      d['status'] ?? 'upcoming',
-                      d['status'] == 'live' ? Colors.green : (d['status'] == 'upcoming' ? Colors.orange : Colors.grey),
-                    );
-                  }).toList(),
-                );
-              },
-            ),
+            _tournamentTile('Solo Clash', 'Free • Solo • 13 Oct 2026', 'Ongoing', Colors.green),
+            _tournamentTile('One Tap King', 'Paid • Solo • 12 Oct 2026', 'Completed', Colors.grey),
+            _tournamentTile('Fire Cup', 'Free • Solo • 11 Oct 2026', 'Completed', Colors.grey),
           ],
         ),
       ),
@@ -364,7 +304,7 @@ class AdminDrawer extends StatelessWidget {
               children: const [
                 Icon(Icons.local_fire_department, color: Color(0xFFFFC107), size: 40),
                 SizedBox(height: 8),
-                Text('SDFF ARENA', style: TextStyle(color: Color(0xFFFFC107), fontSize: 20, fontWeight: FontWeight.bold)),
+                Text('HPFF ARENA', style: TextStyle(color: Color(0xFFFFC107), fontSize: 20, fontWeight: FontWeight.bold)),
                 Text('Admin Panel', style: TextStyle(color: Colors.grey, fontSize: 12)),
               ],
             ),
@@ -417,33 +357,10 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
   final _time = TextEditingController();
   final _roomId = TextEditingController();
   final _roomPass = TextEditingController();
-  bool _saving = false;
 
-  Future<void> _save() async {
-    setState(() => _saving = true);
-    try {
-      await FirebaseFirestore.instance.collection('tournaments').add({
-        'name': _name.text.trim(),
-        'entryFee': _entry.text.trim(),
-        'prize': _prize.text.trim(),
-        'date': _date.text.trim(),
-        'time': _time.text.trim(),
-        'roomId': _roomId.text.trim(),
-        'roomPass': _roomPass.text.trim(),
-        'game': 'Free Fire',
-        'status': 'upcoming',
-        'players': '0',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tournament Created!')));
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
-      setState(() => _saving = false);
-    }
+  void _save() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tournament Created!')));
+    Navigator.pop(context);
   }
 
   @override
@@ -461,7 +378,7 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
           _field(_roomId, 'Room ID'),
           _field(_roomPass, 'Room Password'),
           const SizedBox(height: 20),
-          _saving ? const CircularProgressIndicator() : ElevatedButton(
+          ElevatedButton(
             onPressed: _save,
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black, minimumSize: const Size(double.infinity, 50)),
             child: const Text('SAVE TOURNAMENT', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -487,24 +404,13 @@ class PlayersPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Players'), backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-          final docs = snapshot.data!.docs;
-          if (docs.isEmpty) return const Center(child: Text('No players yet'));
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (context, i) {
-              final d = docs[i].data() as Map<String, dynamic>;
-              return ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: Text(d['name'] ?? 'Unknown'),
-                subtitle: Text('UID: ${d['uid'] ?? '-'}'),
-              );
-            },
-          );
-        },
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          ListTile(leading: CircleAvatar(child: Text('R')), title: Text('RakeshFF'), subtitle: Text('UID: 12345678')),
+          ListTile(leading: CircleAvatar(child: Text('N')), title: Text('Nitesh_07'), subtitle: Text('UID: 23456789')),
+          ListTile(leading: CircleAvatar(child: Text('L')), title: Text('LegendBoy'), subtitle: Text('UID: 34567890')),
+        ],
       ),
     );
   }
@@ -518,15 +424,61 @@ class PaymentsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Payment Requests'), backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('payments').snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-          final docs = snapshot.data!.docs;
-          if (docs.isEmpty) return const Center(child: Text('No payment requests'));
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (context, i) {
-              final d = docs[i].data() as Map<String, dynamic>;
-              return ListTile(
-             
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          ListTile(leading: Icon(Icons.check_circle, color: Colors.green), title: Text('Tournament Entry'), subtitle: Text('12 Oct 2026 • 07:12 PM'), trailing: Text('₹50')),
+          ListTile(leading: Icon(Icons.check_circle, color: Colors.green), title: Text('Prize Distribution'), subtitle: Text('11 Oct 2026 • 10:45 PM'), trailing: Text('₹1,000')),
+        ],
+      ),
+    );
+  }
+}
+
+// ================= QR UPLOAD PAGE =================
+class QrUploadPage extends StatefulWidget {
+  const QrUploadPage({super.key});
+  @override
+  State<QrUploadPage> createState() => _QrUploadPageState();
+}
+
+class _QrUploadPageState extends State<QrUploadPage> {
+  File? _qrImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickQr() async {
+    final XFile? picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() => _qrImage = File(picked.path));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('QR Upload'), backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Container(
+              height: 250,
+              width: double.infinity,
+              decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.amber)),
+              child: _qrImage == null
+                  ? const Center(child: Text('No QR uploaded yet', style: TextStyle(color: Colors.grey)))
+                  : Image.file(_qrImage!, fit: BoxFit.contain),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _pickQr,
+              icon: const Icon(Icons.upload),
+              label: const Text('UPLOAD QR CODE'),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black, minimumSize: const Size(double.infinity, 50)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
