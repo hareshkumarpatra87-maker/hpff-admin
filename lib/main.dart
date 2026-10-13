@@ -98,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 // ================= ADMIN HOME =================
-class AdminHomePage extends StatelessWidget {
+   class AdminHomePage extends StatelessWidget {
   const AdminHomePage({super.key});
 
   @override
@@ -115,20 +115,49 @@ class AdminHomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(child: _statCard('Total Tournaments', '12', Icons.emoji_events, Colors.amber)),
-                const SizedBox(width: 12),
-                Expanded(child: _statCard('Total Players', '248', Icons.people, Colors.blue)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: _statCard('Entry Money', '₹18,750', Icons.monetization_on, Colors.green)),
-                const SizedBox(width: 12),
-                Expanded(child: _statCard('Upcoming', '2', Icons.schedule, Colors.orange)),
-              ],
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('tournaments').snapshots(),
+              builder: (context, tournamentSnap) {
+                return StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('users').snapshots(),
+                  builder: (context, userSnap) {
+                    final tournaments = tournamentSnap.data?.docs ?? [];
+                    final users = userSnap.data?.docs ?? [];
+
+                    int totalTournaments = tournaments.length;
+                    int totalPlayers = users.length;
+                    int upcoming = 0;
+                    int entryMoney = 0;
+
+                    for (var doc in tournaments) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      if (data['status'] == 'upcoming') upcoming++;
+                      final fee = int.tryParse(data['entryFee']?.toString() ?? '0') ?? 0;
+                      entryMoney += fee;
+                    }
+
+                    return Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(child: _statCard('Total Tournaments', '$totalTournaments', Icons.emoji_events, Colors.amber)),
+                            const SizedBox(width: 12),
+                            Expanded(child: _statCard('Total Players', '$totalPlayers', Icons.people, Colors.blue)),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(child: _statCard('Entry Money', '₹$entryMoney', Icons.monetization_on, Colors.green)),
+                            const SizedBox(width: 12),
+                            Expanded(child: _statCard('Upcoming', '$upcoming', Icons.schedule, Colors.orange)),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
             ),
             const SizedBox(height: 24),
             const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -150,9 +179,33 @@ class AdminHomePage extends StatelessWidget {
             const SizedBox(height: 24),
             const Text('Recent Tournaments', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            _tournamentTile('Solo Clash', 'Free • Solo • 13 Oct 2026', 'Ongoing', Colors.green),
-            _tournamentTile('One Tap King', 'Paid • Solo • 12 Oct 2026', 'Completed', Colors.grey),
-            _tournamentTile('Fire Cup', 'Free • Solo • 11 Oct 2026', 'Completed', Colors.grey),
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('tournaments')
+                  .orderBy('createdAt', descending: true)
+                  .limit(3)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final docs = snapshot.data!.docs;
+                if (docs.isEmpty) {
+                  return const Text('No tournaments yet', style: TextStyle(color: Colors.grey));
+                }
+                return Column(
+                  children: docs.map((doc) {
+                    final d = doc.data() as Map<String, dynamic>;
+                    return _tournamentTile(
+                      d['name'] ?? 'Unknown',
+                      '${d['entryFee'] ?? '0'} Fee • ${d['date'] ?? ''}',
+                      d['status'] ?? 'upcoming',
+                      d['status'] == 'live' ? Colors.green : (d['status'] == 'upcoming' ? Colors.orange : Colors.grey),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -162,7 +215,11 @@ class AdminHomePage extends StatelessWidget {
   Widget _statCard(String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.4))),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -180,7 +237,11 @@ class AdminHomePage extends StatelessWidget {
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => page)),
       child: Container(
-        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.4))),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.4)),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -197,57 +258,45 @@ class AdminHomePage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         children: [
-          Container(width: 45, height: 45, decoration: BoxDecoration(color: statusColor.withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Icon(Icons.gamepad, color: statusColor)),
+          Container(
+            width: 45,
+            height: 45,
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.gamepad, color: statusColor),
+          ),
           const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 3),
-            Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-          ])),
-          Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: statusColor.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: Text(status, style: TextStyle(fontSize: 10, color: statusColor))),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                const SizedBox(height: 3),
+                Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(status, style: TextStyle(fontSize: 10, color: statusColor)),
+          ),
         ],
       ),
     );
   }
 }
-
-// ================= DRAWER =================
-class AdminDrawer extends StatelessWidget {
-  const AdminDrawer({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      backgroundColor: const Color(0xFF1A1A1A),
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(color: Color(0xFF0D0D0D)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: const [
-                Icon(Icons.local_fire_department, color: Color(0xFFFFC107), size: 40),
-                SizedBox(height: 8),
-                Text('SDFF ARENA', style: TextStyle(color: Color(0xFFFFC107), fontSize: 20, fontWeight: FontWeight.bold)),
-                Text('Admin Panel', style: TextStyle(color: Colors.grey, fontSize: 12)),
-              ],
-            ),
-          ),
-          _drawerItem(context, 'Dashboard', Icons.home, const AdminHomePage()),
-          _drawerItem(context, 'Create Tournament', Icons.emoji_events, const CreateTournamentPage()),
-          _drawerItem(context, 'Players', Icons.people, const PlayersPage()),
-          _drawerItem(context, 'Payments', Icons.payment, const PaymentsPage()),
-          _drawerItem(context, 'QR Upload', Icons.qr_code, const QrUploadPage()),
-          _drawerItem(context, 'Leaderboard', Icons.leaderboard, const LeaderboardPage()),
-        ],
-      ),
-    );
-  }
 
   Widget _drawerItem(BuildContext context, String title, IconData icon, Widget page) {
     return ListTile(
