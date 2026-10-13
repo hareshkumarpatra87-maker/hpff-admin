@@ -14,6 +14,7 @@ class AdminApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.red,
         brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF0D0D0D),
       ),
       home: const LoginPage(),
     );
@@ -108,20 +109,142 @@ class AdminHomePage extends StatelessWidget {
         title: const Text('HPFF ADMIN PANEL'),
         backgroundColor: Colors.red,
       ),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CreateTournamentPage()),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-          ),
-          child: const Text('Create Tournament', style: TextStyle(fontSize: 18)),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Dashboard Cards
+            Row(
+              children: [
+                Expanded(child: _buildStatCard('Total Tournaments', '5', Icons.emoji_events, Colors.blue)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildStatCard('Total Players', '248', Icons.people, Colors.green)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _buildStatCard('Prize Pool', '₹45,000', Icons.monetization_on, Colors.purple)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildStatCard('Upcoming', '2', Icons.schedule, Colors.orange)),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _buildActionButton(context, 'Create', Icons.add, Colors.red, const CreateTournamentPage())),
+                const SizedBox(width: 8),
+                Expanded(child: _buildActionButton(context, 'Players', Icons.people, Colors.blue, null)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: _buildActionButton(context, 'Leaderboard', Icons.leaderboard, Colors.purple, null)),
+                const SizedBox(width: 8),
+                Expanded(child: _buildActionButton(context, 'Payments', Icons.payment, Colors.green, null)),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text('Recent Tournaments', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            _buildTournamentTile('Solo Ranked Cup', 'Free Entry • 100 Players', 'Live', Colors.green),
+            _buildTournamentTile('Clash Squad Battle', '₹50 Entry • 64 Players', 'Upcoming', Colors.orange),
+            _buildTournamentTile('Headshot King', 'Free Entry • 128 Players', 'Finished', Colors.grey),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 30),
+          const SizedBox(height: 10),
+          Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context, String label, IconData icon, Color color, Widget? page) {
+    return GestureDetector(
+      onTap: () {
+        if (page != null) {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(label, style: const TextStyle(fontSize: 13)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTournamentTile(String name, String subtitle, String status, Color statusColor) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.gamepad, color: statusColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                const SizedBox(height: 4),
+                Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(status, style: TextStyle(fontSize: 11, color: statusColor)),
+          ),
+        ],
       ),
     );
   }
