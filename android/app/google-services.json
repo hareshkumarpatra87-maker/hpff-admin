@@ -9,7 +9,26 @@
       "client_info": {
         "mobilesdk_app_id": "1:95880317596:android:cbfb2b0c095d40b540bb59",
         "android_client_info": {
-          "package_name": "com.hpff.arena.hpff_admin"
+          "package_name": "com.hpff.arena"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCv6kEm1uwysWxqLpJ46S7XcOWOA3NWlGs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:95880317596:android:087acb6b2708285c40bb59",
+        "android_client_info": {
+          "package_name": "com.hpff.hpff_admin"
         }
       },
       "oauth_client": [],
