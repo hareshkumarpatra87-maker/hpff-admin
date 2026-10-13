@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'firebase_options.dart';
+import 'dart:io';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const AdminApp());
 }
 
@@ -11,26 +20,31 @@ class AdminApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'HPFF Admin',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.red,
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF0D0D0D),
+        primaryColor: const Color(0xFFFFC107),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFFFFC107),
+          secondary: Color(0xFFFFC107),
+        ),
       ),
       home: const LoginPage(),
     );
   }
 }
 
+// ================= LOGIN PAGE =================
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   String _errorMessage = '';
 
   void _login() {
@@ -41,53 +55,40 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(builder: (context) => const AdminHomePage()),
       );
     } else {
-      setState(() {
-        _errorMessage = 'ଭୁଲ୍ ଇମେଲ୍ କିମ୍ବା ପାସୱାର୍ଡ';
-      });
+      setState(() => _errorMessage = 'ଭୁଲ୍ ଇମେଲ୍ କିମ୍ବା ପାସୱାର୍ଡ');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('HPFF ADMIN LOGIN'),
-        backgroundColor: Colors.red,
-      ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.admin_panel_settings, size: 80, color: Colors.red),
-            const SizedBox(height: 30),
+            const Icon(Icons.local_fire_department, size: 90, color: Color(0xFFFFC107)),
+            const SizedBox(height: 16),
+            const Text('SDFF ARENA', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFFFFC107))),
+            const Text('FREE FIRE TOURNAMENT', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: 40),
             TextField(
               controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             TextField(
               controller: _passwordController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
             ),
-            const SizedBox(height: 20),
-            if (_errorMessage.isNotEmpty)
-              Text(_errorMessage, style: const TextStyle(color: Colors.red)),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            if (_errorMessage.isNotEmpty) Text(_errorMessage, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _login,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: const Text('LOGIN', style: TextStyle(fontSize: 18)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black, minimumSize: const Size(double.infinity, 50)),
+              child: const Text('LOGIN', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -96,6 +97,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
+// ================= ADMIN HOME =================
 class AdminHomePage extends StatelessWidget {
   const AdminHomePage({super.key});
 
@@ -103,9 +105,11 @@ class AdminHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('HPFF ADMIN PANEL'),
-        backgroundColor: Colors.red,
+        title: const Text('SDFF ARENA ADMIN'),
+        backgroundColor: const Color(0xFFFFC107),
+        foregroundColor: Colors.black,
       ),
+      drawer: const AdminDrawer(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -113,251 +117,349 @@ class AdminHomePage extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: _buildStatCard('Total Tournaments', '5', Icons.emoji_events, Colors.blue)),
+                Expanded(child: _statCard('Total Tournaments', '12', Icons.emoji_events, Colors.amber)),
                 const SizedBox(width: 12),
-                Expanded(child: _buildStatCard('Total Players', '248', Icons.people, Colors.green)),
+                Expanded(child: _statCard('Total Players', '248', Icons.people, Colors.blue)),
               ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildStatCard('Prize Pool', '₹45,000', Icons.monetization_on, Colors.purple)),
+                Expanded(child: _statCard('Entry Money', '₹18,750', Icons.monetization_on, Colors.green)),
                 const SizedBox(width: 12),
-                Expanded(child: _buildStatCard('Upcoming', '2', Icons.schedule, Colors.orange)),
+                Expanded(child: _statCard('Upcoming', '2', Icons.schedule, Colors.orange)),
               ],
             ),
             const SizedBox(height: 24),
             const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            Row(
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.8,
               children: [
-                Expanded(child: _buildActionButton(context, 'Create', Icons.add, Colors.red, const CreateTournamentPage())),
-                const SizedBox(width: 8),
-                Expanded(child: _buildActionButton(context, 'Players', Icons.people, Colors.blue, const PlayersPage())),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(child: _buildActionButton(context, 'Leaderboard', Icons.leaderboard, Colors.purple, const LeaderboardPage())),
-                const SizedBox(width: 8),
-                Expanded(child: _buildActionButton(context, 'Payments', Icons.payment, Colors.green, const PaymentsPage())),
+                _actionBtn(context, 'Create Tournament', Icons.emoji_events, Colors.amber, const CreateTournamentPage()),
+                _actionBtn(context, 'View Players', Icons.people, Colors.green, const PlayersPage()),
+                _actionBtn(context, 'View Payments', Icons.payment, Colors.pink, const PaymentsPage()),
+                _actionBtn(context, 'QR Upload', Icons.qr_code, Colors.purple, const QrUploadPage()),
               ],
             ),
             const SizedBox(height: 24),
             const Text('Recent Tournaments', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            _buildTournamentTile('Solo Ranked Cup', 'Free Entry • 100 Players', 'Live', Colors.green),
-            _buildTournamentTile('Clash Squad Battle', '₹50 Entry • 64 Players', 'Upcoming', Colors.orange),
-            _buildTournamentTile('Headshot King', 'Free Entry • 128 Players', 'Finished', Colors.grey),
+            _tournamentTile('Solo Clash', 'Free • Solo • 13 Oct 2026', 'Ongoing', Colors.green),
+            _tournamentTile('One Tap King', 'Paid • Solo • 12 Oct 2026', 'Completed', Colors.grey),
+            _tournamentTile('Fire Cup', 'Free • Solo • 11 Oct 2026', 'Completed', Colors.grey),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _statCard(String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
+      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.4))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 30),
-          const SizedBox(height: 10),
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
           Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          const SizedBox(height: 2),
+          Text(title, style: const TextStyle(fontSize: 11, color: Colors.grey)),
         ],
       ),
     );
   }
 
-  Widget _buildActionButton(BuildContext context, String label, IconData icon, Color color, Widget page) {
+  Widget _actionBtn(BuildContext context, String label, IconData icon, Color color, Widget page) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
-      },
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => page)),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
+        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.4))),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, color: color, size: 28),
-            const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontSize: 13)),
+            const SizedBox(height: 6),
+            Text(label, style: const TextStyle(fontSize: 12), textAlign: TextAlign.center),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTournamentTile(String name, String subtitle, String status, Color statusColor) {
+  Widget _tournamentTile(String name, String subtitle, String status, Color statusColor) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.gamepad, color: statusColor),
-          ),
+          Container(width: 45, height: 45, decoration: BoxDecoration(color: statusColor.withOpacity(0.2), borderRadius: BorderRadius.circular(8)), child: Icon(Icons.gamepad, color: statusColor)),
           const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(status, style: TextStyle(fontSize: 11, color: statusColor)),
-          ),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(height: 3),
+            Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          ])),
+          Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: statusColor.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: Text(status, style: TextStyle(fontSize: 10, color: statusColor))),
         ],
       ),
     );
   }
 }
 
-// CREATE TOURNAMENT PAGE
+// ================= DRAWER =================
+class AdminDrawer extends StatelessWidget {
+  const AdminDrawer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      backgroundColor: const Color(0xFF1A1A1A),
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(color: Color(0xFF0D0D0D)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: const [
+                Icon(Icons.local_fire_department, color: Color(0xFFFFC107), size: 40),
+                SizedBox(height: 8),
+                Text('SDFF ARENA', style: TextStyle(color: Color(0xFFFFC107), fontSize: 20, fontWeight: FontWeight.bold)),
+                Text('Admin Panel', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              ],
+            ),
+          ),
+          _drawerItem(context, 'Dashboard', Icons.home, const AdminHomePage()),
+          _drawerItem(context, 'Create Tournament', Icons.emoji_events, const CreateTournamentPage()),
+          _drawerItem(context, 'Players', Icons.people, const PlayersPage()),
+          _drawerItem(context, 'Payments', Icons.payment, const PaymentsPage()),
+          _drawerItem(context, 'QR Upload', Icons.qr_code, const QrUploadPage()),
+          _drawerItem(context, 'Leaderboard', Icons.leaderboard, const LeaderboardPage()),
+        ],
+      ),
+    );
+  }
+
+  Widget _drawerItem(BuildContext context, String title, IconData icon, Widget page) {
+    return ListTile(
+      leading: Icon(icon, color: const Color(0xFFFFC107)),
+      title: Text(title),
+      onTap: () {
+        Navigator.pop(context);
+        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+      },
+    );
+  }
+}
+
+// ================= CREATE TOURNAMENT =================
 class CreateTournamentPage extends StatefulWidget {
   const CreateTournamentPage({super.key});
-
   @override
   State<CreateTournamentPage> createState() => _CreateTournamentPageState();
 }
 
 class _CreateTournamentPageState extends State<CreateTournamentPage> {
-  final _nameController = TextEditingController();
-  final _entryFeeController = TextEditingController();
-  final _prizeController = TextEditingController();
-  final _dateController = TextEditingController();
-  final _timeController = TextEditingController();
-  final _roomIdController = TextEditingController();
-  final _roomPassController = TextEditingController();
+  final _name = TextEditingController();
+  final _entry = TextEditingController();
+  final _prize = TextEditingController();
+  final _date = TextEditingController();
+  final _time = TextEditingController();
+  final _roomId = TextEditingController();
+  final _roomPass = TextEditingController();
+  bool _saving = false;
 
-  void _saveTournament() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tournament Created Successfully!')),
-    );
-    Navigator.pop(context);
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      await FirebaseFirestore.instance.collection('tournaments').add({
+        'name': _name.text.trim(),
+        'entryFee': _entry.text.trim(),
+        'prize': _prize.text.trim(),
+        'date': _date.text.trim(),
+        'time': _time.text.trim(),
+        'roomId': _roomId.text.trim(),
+        'roomPass': _roomPass.text.trim(),
+        'game': 'Free Fire',
+        'status': 'upcoming',
+        'players': '0',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tournament Created!')));
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      setState(() => _saving = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Tournament'), backgroundColor: Colors.red),
+      appBar: AppBar(title: const Text('Create Tournament'), backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Tournament Name', border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            TextField(controller: _entryFeeController, decoration: const InputDecoration(labelText: 'Entry Fee', border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            TextField(controller: _prizeController, decoration: const InputDecoration(labelText: 'Prize', border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            TextField(controller: _dateController, decoration: const InputDecoration(labelText: 'Date', border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            TextField(controller: _timeController, decoration: const InputDecoration(labelText: 'Time', border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            TextField(controller: _roomIdController, decoration: const InputDecoration(labelText: 'Room ID', border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            TextField(controller: _roomPassController, decoration: const InputDecoration(labelText: 'Room Password', border: OutlineInputBorder())),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveTournament,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, minimumSize: const Size(double.infinity, 50)),
-              child: const Text('SAVE TOURNAMENT', style: TextStyle(fontSize: 18)),
-            ),
-          ],
-        ),
+        child: Column(children: [
+          _field(_name, 'Tournament Name'),
+          _field(_entry, 'Entry Fee'),
+          _field(_prize, 'Prize Pool'),
+          _field(_date, 'Date'),
+          _field(_time, 'Time'),
+          _field(_roomId, 'Room ID'),
+          _field(_roomPass, 'Room Password'),
+          const SizedBox(height: 20),
+          _saving ? const CircularProgressIndicator() : ElevatedButton(
+            onPressed: _save,
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black, minimumSize: const Size(double.infinity, 50)),
+            child: const Text('SAVE TOURNAMENT', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ]),
       ),
+    );
+  }
+
+  Widget _field(TextEditingController c, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(controller: c, decoration: InputDecoration(labelText: label, border: const OutlineInputBorder())),
     );
   }
 }
 
-// PLAYERS PAGE
+// ================= PLAYERS PAGE =================
 class PlayersPage extends StatelessWidget {
   const PlayersPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Players'), backgroundColor: Colors.blue),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: const [
-          ListTile(leading: CircleAvatar(child: Text('R')), title: Text('RakeshFF'), subtitle: Text('UID: 12345678'), trailing: Text('Joined')),
-          ListTile(leading: CircleAvatar(child: Text('N')), title: Text('Nitesh_07'), subtitle: Text('UID: 23456789'), trailing: Text('Joined')),
-          ListTile(leading: CircleAvatar(child: Text('L')), title: Text('LegendBoy'), subtitle: Text('UID: 34567890'), trailing: Text('Joined')),
-        ],
+      appBar: AppBar(title: const Text('Players'), backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('users').snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          final docs = snapshot.data!.docs;
+          if (docs.isEmpty) return const Center(child: Text('No players yet'));
+          return ListView.builder(
+            itemCount: docs.length,
+            itemBuilder: (context, i) {
+              final d = docs[i].data() as Map<String, dynamic>;
+              return ListTile(
+                leading: const CircleAvatar(child: Icon(Icons.person)),
+                title: Text(d['name'] ?? 'Unknown'),
+                subtitle: Text('UID: ${d['uid'] ?? '-'}'),
+              );
+            },
+          );
+        },
       ),
     );
   }
 }
 
-// LEADERBOARD PAGE
-class LeaderboardPage extends StatelessWidget {
-  const LeaderboardPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Leaderboard'), backgroundColor: Colors.purple),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: const [
-          ListTile(leading: Text('1', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), title: Text('RakeshFF'), trailing: Text('₹5,000')),
-          ListTile(leading: Text('2', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), title: Text('Nitesh_07'), trailing: Text('₹3,000')),
-          ListTile(leading: Text('3', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), title: Text('LegendBoy'), trailing: Text('₹2,000')),
-        ],
-      ),
-    );
-  }
-}
-
-// PAYMENTS PAGE
+// ================= PAYMENTS PAGE =================
 class PaymentsPage extends StatelessWidget {
   const PaymentsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Payments'), backgroundColor: Colors.green),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: const [
-          ListTile(leading: Icon(Icons.check_circle, color: Colors.green), title: Text('Tournament Entry'), subtitle: Text('12 Oct 2026 • 07:12 PM'), trailing: Text('₹50')),
-          ListTile(leading: Icon(Icons.check_circle, color: Colors.green), title: Text('Prize Distribution'), subtitle: Text('11 Oct 2026 • 10:45 PM'), trailing: Text('₹1,000')),
-          ListTile(leading: Icon(Icons.check_circle, color: Colors.green), title: Text('Refund'), subtitle: Text('10 Oct 2026 • 04:20 PM'), trailing: Text('₹50')),
-        ],
+      appBar: AppBar(title: const Text('Payment Requests'), backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('payments').snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          final docs = snapshot.data!.docs;
+          if (docs.isEmpty) return const Center(child: Text('No payment requests'));
+          return ListView.builder(
+            itemCount: docs.length,
+            itemBuilder: (context, i) {
+              final d = docs[i].data() as Map<String, dynamic>;
+              return ListTile(
+                leading: const Icon(Icons.payment, color: Colors.green),
+                title: Text(d['playerName'] ?? 'Unknown'),
+                subtitle: Text('Amount: ₹${d['amount'] ?? 0}'),
+                trailing: Text(d['status'] ?? 'pending'),
+              );
+            },
+          );
+        },
       ),
+    );
+  }
+}
+
+// ================= QR UPLOAD PAGE =================
+class QrUploadPage extends StatefulWidget {
+  const QrUploadPage({super.key});
+  @override
+  State<QrUploadPage> createState() => _QrUploadPageState();
+}
+
+class _QrUploadPageState extends State<QrUploadPage> {
+  File? _qrImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickQr() async {
+    final XFile? picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() => _qrImage = File(picked.path));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('QR Upload'), backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Container(
+              height: 250,
+              width: double.infinity,
+              decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.amber)),
+              child: _qrImage == null
+                  ? const Center(child: Text('No QR uploaded yet', style: TextStyle(color: Colors.grey)))
+                  : Image.file(_qrImage!, fit: BoxFit.contain),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _pickQr,
+              icon: const Icon(Icons.upload),
+              label: const Text('UPLOAD QR CODE'),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black, minimumSize: const Size(double.infinity, 50)),
+            ),
+            const SizedBox(height: 12),
+            const Text('This QR will be shown to players in the Player App', style: TextStyle(color: Colors.grey, fontSize: 12), textAlign: TextAlign.center),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ================= LEADERBOARD PAGE =================
+class LeaderboardPage extends StatelessWidget {
+  const LeaderboardPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Leaderboard'), backgroundColor: const Color(0xFFFFC107), foregroundColor: Colors.black),
+      body: const Center(child: Text('Leaderboard Coming Soon')),
     );
   }
 }
